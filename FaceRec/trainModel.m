@@ -1,0 +1,42 @@
+clc
+% Generate Feature Vectors
+input_dir = 'C:\Users\Umang Shah\Documents\MATLAB\AeroFS\TestingFeatureBased\TrainFaces\';
+faceGallery = imageSet(input_dir, 'recursive');
+num_images = numel(faceGallery);
+image_dims = [86,126];
+% filenames = dir(fullfile(input_dir, '*.jpg'));
+% num_images = numel(filenames);
+
+images = zeros(prod(image_dims), num_images*3);
+featureCount = 1;
+for i=1:size(faceGallery,2)
+    for j = 1:faceGallery(i).Count
+        img = rgb2gray(read(faceGallery(i),j));
+        img = imresize(img,image_dims);
+        img = im2double(img);
+        
+        images(:, featureCount) = img(:);
+        trainingLabel{featureCount} = faceGallery(i).Description; 
+        featureCount = featureCount + 1;
+    end
+    personIndex{i} = faceGallery(i).Description;
+end
+
+
+mean_face = mean(images,2);
+shifted_images = images - repmat(mean_face,1, num_images*3);
+
+% steps 3 and 4: calculate the ordered eigenvectors and eigenvalues
+[evectors, score, evalues] = princomp(images');
+
+num_eigenfaces = 30;
+evectors = evectors(:, 1:num_eigenfaces);
+ 
+% step 6: project the images into the subspace to generate the feature vectors
+features = evectors' * shifted_images;
+%% Fit the model to the 
+
+classifier = fitcecoc(features',trainingLabel);
+name = 'classifier2.mat';
+save(name);
+ooo = msgbox('Model Trained');
